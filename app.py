@@ -35,6 +35,9 @@ game_state = {
 
 
 def reset_board(mode):
+    """
+    Resets the board game
+    """
     if mode == "easy":
         game_state["board"] = [row[:] for row in EASY_BOARD]
     else:
@@ -43,6 +46,11 @@ def reset_board(mode):
 
 
 def is_valid_move(board, from_pos, to_pos):
+    """
+    Checks if moves of user is valid or not
+    If not: returns not
+    if yes: returns new state as current state
+    """
     x1, y1 = from_pos
     x2, y2 = to_pos
     if board[x1][y1] != 1 or board[x2][y2] != 0:
@@ -57,6 +65,10 @@ def is_valid_move(board, from_pos, to_pos):
 
 
 def make_move(board, from_pos, to_pos):
+    """
+    Checks if move made is as per
+    peg solitaire rules.
+    """
     x1, y1 = from_pos
     x2, y2 = to_pos
     if abs(x1 - x2) == 2:
@@ -73,6 +85,9 @@ def make_move(board, from_pos, to_pos):
 
 @app.route("/start", methods=["POST"])
 def start_game():
+    """
+    API for start game.
+    """
     mode = request.json.get("mode", "easy")
     game_state["mode"] = mode
     reset_board(mode)
@@ -81,6 +96,9 @@ def start_game():
 
 @app.route("/move", methods=["POST"])
 def move():
+    """
+    API for move state in game
+    """
     from_pos = request.json["from"]
     to_pos = request.json["to"]
     board = game_state["board"]
@@ -94,6 +112,9 @@ def move():
 
 @app.route("/undo", methods=["POST"])
 def undo_move():
+    """
+    API route for undo a move
+    """
     if game_state["history"]:
         game_state["board"] = game_state["history"].pop()
         return jsonify({"board": game_state["board"], "status": "undo_successful"})
@@ -103,12 +124,19 @@ def undo_move():
 
 @app.route("/reset", methods=["POST"])
 def reset_game():
+    """
+    API route for reset the game state as
+    per game mode.
+    """
     reset_board(game_state["mode"])
     return jsonify({"board": game_state["board"], "status": "reset_successful"})
 
 
 @app.route("/state", methods=["GET"])
 def get_state():
+    """
+    API route for get the game mode
+    """
     return jsonify({"board": game_state["board"]})
 
 

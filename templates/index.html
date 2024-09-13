@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,123 +6,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peg Solitaire</title>
     <style>
-        table {
-            margin: 20px auto;
-            border-spacing: 10px;
-        }
-        td {
-            width: 40px;
-            height: 40px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .peg {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: blue;
-            cursor: pointer;
-        }
-        .hole {
-            width: 30px;
-            height: 30px;
-            background-color: lightgray;
-            cursor: pointer;
-        }
-        .block {
-            background-color: transparent;
-        }
+        table { border-spacing: 5px; margin: 20px auto; }
+        td { width: 50px; height: 50px; text-align: center; }
+        .peg { background-color: green; cursor: pointer; }
+        .empty { background-color: lightgray; }
+        .blocked { background-color: white; }
     </style>
 </head>
 <body>
-    <h1 style="text-align:center;">Peg Solitaire</h1>
-    <div style="text-align:center;">
-        <button onclick="resetGame()">Reset Game</button>
-        <p id="gameStatus"></p>
-    </div>
-    <table id="gameBoard"></table>
+    <h1>Peg Solitaire</h1>
+    <button onclick="startGame('easy')">Start Easy Mode</button>
+    <button onclick="startGame('hard')">Start Hard Mode</button>
+    <button onclick="undoMove()">Undo</button>
+    <button onclick="resetGame()">Reset</button>
+    <div id="board"></div>
 
     <script>
         let selectedPeg = null;
-        let board = [];
+        let boardState = [];
 
-        function newGame() {
-            fetch('/new_game')
-                .then(response => response.json())
-                .then(data => {
-                    board = data.board;
-                    renderBoard();
-                    document.getElementById("gameStatus").innerText = "Game On!";
-                });
-        }
-
-        function movePeg(x1, y1, x2, y2) {
-            fetch('/move', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ board: board, start: [x1, y1], end: [x2, y2] })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } else {
-                    board = data.board;
-                    renderBoard();
-                    document.getElementById("gameStatus").innerText = data.game_status === 'continue' ? "Game On!" : data.game_status === 'win' ? "You Win!" : "Game Over!";
-                }
-            });
-        }
-
-        function renderBoard() {
-            const table = document.getElementById("gameBoard");
-            table.innerHTML = '';
-            for (let i = 0; i < 7; i++) {
-                const row = document.createElement("tr");
-                for (let j = 0; j < 7; j++) {
-                    const cell = document.createElement("td");
-                    if (board[i][j] === 1) {
-                        const peg = document.createElement("div");
-                        peg.classList.add("peg");
-                        peg.onclick = () => selectPeg(i, j);
-                        cell.appendChild(peg);
-                    } else if (board[i][j] === 0) {
-                        const hole = document.createElement("div");
-                        hole.classList.add("hole");
-                        hole.onclick = () => moveTo(i, j);
-                        cell.appendChild(hole);
+        function createBoard(board) {
+            const table = document.createElement('table');
+            board.forEach((row, x) => {
+                const tr = document.createElement('tr');
+                row.forEach((cell, y) => {
+                    const td = document.createElement('td');
+                    if (cell === 1) {
+                        td.className = 'peg';
+                        td.onclick = () => selectPeg(x, y);
+                    } else if (cell === 0) {
+                        td.className = 'empty';
+                        td.onclick = () => selectHole(x, y);
                     } else {
-                        cell.classList.add("block");
+                        td.className = 'blocked';
                     }
-                    row.appendChild(cell);
-                }
-                table.appendChild(row);
-            }
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+            boardDiv.appendChild(table);
+            boardState = board;
         }
 
         function selectPeg(x, y) {
             selectedPeg = [x, y];
         }
 
-        function moveTo(x, y) {
+        function selectHole(x, y) {
             if (selectedPeg) {
-                const [x1, y1] = selectedPeg;
-                movePeg(x1, y1, x, y);
-                selectedPeg = null;
+                const from = selectedPeg;
+                const to = [x, y];
+                fetch('/move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ from, to })
+                }).then(res => res.json())
+                  .then(data => {
+                    if (data.board) createBoard(data.board);
+                    selectedPeg = null;
+                }).catch(err => alert("Invalid move"));
             }
+        }
+
+        function startGame(mode) {
+            fetch('/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            }).then(res => res.json())
+              .then(data => createBoard(data.board));
+        }
+
+        function undoMove() {
+            fetch('/undo', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => createBoard(data.board))
+                .catch(err => alert("No moves to undo"));
         }
 
         function resetGame() {
             fetch('/reset', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    board = data.board;
-                    renderBoard();
-                    document.getElementById("gameStatus").innerText = "Game On!";
-                });
+                .then(res => res.json())
+                .then(data => createBoard(data.board));
         }
-
-        window.onload = newGame;
     </script>
 </body>
 </html>
