@@ -5,91 +5,191 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peg Solitaire</title>
     <style>
-        table { border-spacing: 5px; margin: 20px auto; }
-        td { width: 50px; height: 50px; text-align: center; }
-        .peg { background-color: green; cursor: pointer; }
-        .empty { background-color: lightgray; }
-        .blocked { background-color: white; }
+        body{
+            margin: 0;
+            height: 100vh;
+            font-size: 1.6rem;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .grid-container{
+            display: grid;
+            grid-template-areas: 'header'
+            'main'
+            'footer';
+            grid-template-columns: 1fr;
+            grid-template-rows: 5rem 1fr 5rem;
+            height: 100%;
+        }
+        header{
+            grid-area: header;
+            background-color: yellowgreen;
+        }
+        main{
+            grid-area: main;
+            padding: 1rem;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(7, 50px);
+            gap: 5px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        .peg {
+            background-color: blue;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .peg:hover {
+            transform: scale(1.1);
+        }
+        .empty {
+            background-color: lightgray;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .empty:hover {
+            background-color: #d3d3d3;
+        }
+        .invalid {
+            background-color: red;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        h1{
+            font-size: 1.8rem;
+            padding: 1rem 0;
+        }
+        h2{
+            font-size: 1.6rem;
+            padding: 1rem 0;
+        }
+        .row{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .row.center {
+            justify-content: center;
+        }
+        @media (max-width: 600px) {
+            .board {
+                grid-template-columns: repeat(7, 40px);
+            }
+            .cell {
+                width: 40px;
+                height: 40px;
+            }
+            .peg {
+                width: 30px;
+                height: 30px;
+            }
+        }
+        footer{
+            grid-area: footer;
+            background-color: yellowgreen;
+        }
     </style>
 </head>
 <body>
-    <h1>Peg Solitaire</h1>
-    <button onclick="startGame('easy')">Start Easy Mode</button>
-    <button onclick="startGame('hard')">Start Hard Mode</button>
-    <button onclick="undoMove()">Undo</button>
-    <button onclick="resetGame()">Reset</button>
-    <div id="board"></div>
-
+    <div class="grid-container">
+        <header class="row center">
+            <h1> Peg Solitaire </h1>
+        </header>
+        <main>
+            <div class="board" id="board"></div>
+            <button onclick="resetGame()">Reset</button>
+            <button onclick="undoMove()">Undo</button>
+        </main>
+        <footer class="row center">
+            Created by Kaihonyo
+        </footer>
+    </div>
     <script>
         let selectedPeg = null;
-        let boardState = [];
 
-        function createBoard(board) {
-            const table = document.createElement('table');
-            board.forEach((row, x) => {
-                const tr = document.createElement('tr');
-                row.forEach((cell, y) => {
-                    const td = document.createElement('td');
+        function fetchBoard() {
+            fetch('/board')
+                .then(response => response.json())
+                .then(data => renderBoard(data));
+        }
+        function renderBoard(board) {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            board.forEach((row, i) => {
+                row.forEach((cell, j) => {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.classList.add('cell');
                     if (cell === 1) {
-                        td.className = 'peg';
-                        td.onclick = () => selectPeg(x, y);
+                        const peg = document.createElement('div');
+                        peg.classList.add('peg');
+                        peg.onclick = () => selectPeg(i, j);
+                        cellDiv.appendChild(peg);
                     } else if (cell === 0) {
-                        td.className = 'empty';
-                        td.onclick = () => selectHole(x, y);
+                        cellDiv.classList.add('empty');
+                        cellDiv.onclick = () => movePeg(i, j);
                     } else {
-                        td.className = 'blocked';
+                        cellDiv.style.backgroundColor = 'darkgray';
                     }
-                    tr.appendChild(td);
+                    boardElement.appendChild(cellDiv);
                 });
-                table.appendChild(tr);
             });
-            const boardDiv = document.getElementById('board');
-            boardDiv.innerHTML = '';
-            boardDiv.appendChild(table);
-            boardState = board;
         }
-
         function selectPeg(x, y) {
-            selectedPeg = [x, y];
+            selectedPeg = { x, y };
         }
-
-        function selectHole(x, y) {
+        function movePeg(x, y) {
             if (selectedPeg) {
-                const from = selectedPeg;
-                const to = [x, y];
                 fetch('/move', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ from, to })
-                }).then(res => res.json())
-                  .then(data => {
-                    if (data.board) createBoard(data.board);
+                    body: JSON.stringify({ src: [selectedPeg.x, selectedPeg.y], dst: [x, y] })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    renderBoard(data.board);
+                    if (data.status === 'win') alert('You win!');
+                    if (data.status === 'lose') alert('No more valid moves!');
                     selectedPeg = null;
-                }).catch(err => alert("Invalid move"));
+                });
             }
         }
-
-        function startGame(mode) {
-            fetch('/start', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode })
-            }).then(res => res.json())
-              .then(data => createBoard(data.board));
-        }
-
-        function undoMove() {
-            fetch('/undo', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => createBoard(data.board))
-                .catch(err => alert("No moves to undo"));
-        }
-
         function resetGame() {
             fetch('/reset', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => createBoard(data.board));
+                .then(response => response.json())
+                .then(data => renderBoard(data));
         }
+        function undoMove() {
+            fetch('/undo', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => renderBoard(data));
+        }
+        fetchBoard();
     </script>
 </body>
 </html>
