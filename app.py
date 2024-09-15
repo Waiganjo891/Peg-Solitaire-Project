@@ -2,9 +2,9 @@
 """
 Peg Solitaire Backend API using Flask.
 This module provides a backend API for the Peg Solitaire game using Flask.
-It defines several endpoints to interact with the game, including starting a game,
-making moves, undoing moves, checking the game status, and resetting the game.
-Module includes:
+It defines several endpoints to interact with the game, including starting
+a game, making moves, undoing moves, checking the game status, and resetting
+the game. Module includes:
 - `/board`: Returns the current board state.
 - `/move`: Executes a move, validates it, and checks if the player won or lost.
 - `/reset`: Resets the game board to the initial state.
@@ -18,9 +18,9 @@ app = Flask(__name__)
 INITIAL_BOARD = [
     [-1, -1, 1, 1, 1, -1, -1],
     [-1,  1, 1, 1, 1,  1, -1],
-    [ 1,  1, 1, 0, 1,  1,  1],
-    [ 1,  1, 1, 1, 1,  1,  1],
-    [ 1,  1, 1, 1, 1,  1,  1],
+    [1,  1, 1, 0, 1,  1,  1],
+    [1,  1, 1, 1, 1,  1,  1],
+    [1,  1, 1, 1, 1,  1,  1],
     [-1,  1, 1, 1, 1,  1, -1],
     [-1, -1, 1, 1, 1, -1, -1]
 ]
@@ -138,7 +138,7 @@ def make_move():
     data = request.json
     src = tuple(data['src'])
     dst = tuple(data['dst'])
-    
+
     if is_valid_move(game_board, src, dst):
         move_history.append(deepcopy(game_board))
         apply_move(game_board, src, dst)
