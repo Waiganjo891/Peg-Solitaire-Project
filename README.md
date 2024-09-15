@@ -10,9 +10,9 @@ Peg Solitaire is a single-player puzzle game. The objective is to clear the boar
 
 ## Installation Instructions
 1. Install Flask:
-pip install Flask
+- pip install Flask
 2. Run the game:
-python app.py
+- python app.py
 
 The game will be available at `http://localhost:5000`.
 
