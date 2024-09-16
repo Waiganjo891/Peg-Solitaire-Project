@@ -89,7 +89,7 @@ To get the project up and running locally, follow these steps:
      [-1, 1, 1, 1, 1, 1, -1],
      [-1, -1, 1, 1, 1, -1, -1],
    ]
-  ```
+   ```
 
 2. **`POST /move`**
    Makes a move in the game. Expects src (source position) and dst (destination position) in the request body.
