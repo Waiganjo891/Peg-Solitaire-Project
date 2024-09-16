@@ -89,3 +89,29 @@ To get the project up and running locally, follow these steps:
      [-1, 1, 1, 1, 1, 1, -1],
      [-1, -1, 1, 1, 1, -1, -1],
    ]
+  ```
+
+2. **`POST /move`**
+   Makes a move in the game. Expects src (source position) and dst (destination position) in the request body.
+   **Request:**
+   ```json
+   {
+    "src": [x1, y1],
+    "dst": [x2, y2],
+   }
+   ```
+   **Response:**
+   ```json
+   {
+    "status": "win" | "lose" | "continue" | "invalid",
+   }
+   ```
+
+3. **`POST /reset`**
+   Resets the game board to its initial state.
+
+4. **`POST /undo`**
+   Undoes the last move.
+
+## License
+This project is licensed under the MIT License.
