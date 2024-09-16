@@ -75,7 +75,8 @@ To get the project up and running locally, follow these steps:
 
 ## API Endpoints
 
-1. **`GET /board`**  
+1. **`GET /board`**
+
    Returns the current state of the game board.
 
    **Response:**
@@ -92,6 +93,7 @@ To get the project up and running locally, follow these steps:
    ```
 
 2. **`POST /move`**
+
    Makes a move in the game. Expects src (source position) and dst (destination position) in the request body.
    **Request:**
    ```json
@@ -108,9 +110,11 @@ To get the project up and running locally, follow these steps:
    ```
 
 3. **`POST /reset`**
+
    Resets the game board to its initial state.
 
 4. **`POST /undo`**
+
    Undoes the last move.
 
 ## License
